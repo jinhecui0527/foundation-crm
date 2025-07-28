@@ -1,0 +1,2595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客户管理系统</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.png" type="image/png"> <style>
+        :root {
+            /* 基于基金会品牌的温暖色系 */
+            --primary: #FF6B6B;          /* 温暖的红色 - 爱心主色 */
+            --primary-dark: #E85555;
+            --primary-light: #FFE0E0;
+
+            --secondary: #FFB84D;        /* 温暖的橙色 - 太阳光芒 */
+            --secondary-dark: #FF9A1A;
+            --secondary-light: #FFF5E6;
+
+            --accent: #9C88FF;           /* 柔和的紫色 - 关怀 */
+            --accent-light: #D3C9FF;
+
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FFC107;
+            --danger: #F44336;
+
+            /* 中性色 */
+            --text-color: #333333;
+            --text-color-light: #666666;
+            --background-color: #F8F9FA;
+            --card-background: #FFFFFF;
+            --border-color: #E0E0E0;
+            --sidebar-bg: #FFFFFF;
+            --sidebar-text: #333333;
+            --sidebar-hover-bg: #F0F0F0;
+            --sidebar-active-bg: var(--primary-light);
+            --sidebar-active-text: var(--primary);
+            --header-bg: #FFFFFF;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+            /* Dark Mode Variables */
+            --dark-text-color: #E0E0E0;
+            --dark-text-color-light: #AAAAAA;
+            --dark-background-color: #1A1A1A;
+            --dark-card-background: #2D2D2D;
+            --dark-border-color: #444444;
+            --dark-sidebar-bg: #2D2D2D;
+            --dark-sidebar-text: #E0E0E0;
+            --dark-sidebar-hover-bg: #3A3A3A;
+            --dark-sidebar-active-bg: #4A2B2B; /* Darker primary-light */
+            --dark-sidebar-active-text: var(--primary);
+            --dark-header-bg: #2D2D2D;
+            --dark-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode {
+            --text-color: var(--dark-text-color);
+            --text-color-light: var(--dark-text-color-light);
+            --background-color: var(--dark-background-color);
+            --card-background: var(--dark-card-background);
+            --border-color: var(--dark-border-color);
+            --sidebar-bg: var(--dark-sidebar-bg);
+            --sidebar-text: var(--dark-sidebar-text);
+            --sidebar-hover-bg: var(--dark-sidebar-hover-bg);
+            --sidebar-active-bg: var(--dark-sidebar-active-bg);
+            --sidebar-active-text: var(--dark-sidebar-active-text);
+            --dark-header-bg: var(--dark-header-bg);
+            --box-shadow: var(--dark-box-shadow);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 80px; /* Collapsed width */
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center items when collapsed */
+            transition: width 0.3s ease, background-color 0.3s ease;
+            box-shadow: var(--box-shadow);
+            flex-shrink: 0; /* Prevent shrinking */
+            overflow-x: hidden; /* Hide overflowing text when collapsed */
+            z-index: 1000; /* Ensure sidebar is above content on mobile */
+        }
+
+        .sidebar.expanded {
+            width: 250px; /* Expanded width */
+            align-items: flex-start; /* Align text to start when expanded */
+        }
+
+        .sidebar-header {
+            width: 100%;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo {
+            max-width: 60px;
+            height: auto;
+            transition: max-width 0.3s ease;
+        }
+
+        .sidebar.expanded .sidebar-logo {
+            max-width: 120px;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            width: 100%;
+            padding: 0;
+        }
+
+        .sidebar-nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-nav-item a {
+            display: flex;
+            align-items: center;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin: 0 0.8rem; /* Horizontal margin for collapsed state */
+            transition: background-color 0.2s ease, color 0.2s ease, padding 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .sidebar-nav-item a:hover {
+            background-color: var(--sidebar-hover-bg);
+        }
+
+        .sidebar-nav-item a.active {
+            background-color: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+            font-weight: 600;
+        }
+
+        .sidebar-icon {
+            font-size: 1.5rem;
+            width: 40px; /* Fixed width for icons */
+            display: flex;
+            justify-content: center; /* Center icon within its allocated space */
+            align-items: center;
+            flex-shrink: 0; /* Prevent icon from shrinking */
+            transition: margin-right 0.3s ease;
+        }
+
+        .sidebar-text {
+            display: none; /* Hidden by default */
+            font-size: 1rem;
+            margin-left: 0; /* No margin when collapsed */
+            opacity: 0;
+            transition: opacity 0.3s ease, margin-left 0.3s ease;
+        }
+
+        .sidebar.expanded .sidebar-text {
+            display: block; /* Show when expanded */
+            margin-left: 1rem; /* Spacing between icon and text */
+            opacity: 1;
+        }
+
+        /* Adjust icon and text alignment when expanded */
+        .sidebar.expanded .sidebar-nav-item a {
+            padding-left: 1.5rem; /* Adjust total padding */
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--background-color);
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+            flex-shrink: 0;
+            z-index: 999; /* Ensure header is above content */
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo-text {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            height: 40px;
+            margin-right: 1rem;
+        }
+
+        .crm-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-left: 10px; /* Spacing from logo */
+            white-space: nowrap;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color-light);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .header-icon-button:hover {
+            color: var(--primary);
+        }
+
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light); /* Placeholder background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: bold;
+            overflow: hidden; /* Hide overflow for image */
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .username {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .card-description {
+            font-size: 0.9rem;
+            color: var(--text-color-light);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: #FFFFFF;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #FFFFFF;
+        }
+
+        .btn-danger:hover {
+            background-color: #C62828;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-color-light);
+            transition: color 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            color: var(--primary);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background-color: var(--card-background);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            min-width: 600px; /* Ensure table doesn't shrink too much */
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table thead th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--sidebar-hover-bg);
+        }
+
+        .data-table .status-badge {
+            display: inline-block;
+            padding: 0.3em 0.7em;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #FFFFFF;
+        }
+
+        .status-active { background-color: var(--success); }
+        .status-pending { background-color: var(--warning); }
+        .status-completed { background-color: var(--info); }
+        .status-closed { background-color: var(--danger); }
+        .status-ongoing { background-color: var(--primary); }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Specific styles for login/auth */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--background-color);
+        }
+
+        .auth-card {
+            background-color: var(--card-background);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .auth-card p {
+            margin-bottom: 1.5rem;
+            color: var(--text-color-light);
+        }
+
+        .auth-card .btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* PR Data Button Specific Style */
+        .pr-data-button {
+            background-color: #f0f0f0; /* Light gray for inactive */
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .pr-data-button.active {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        .pr-data-button:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .pr-data-button.active:hover {
+            background-color: var(--primary-dark);
+            color: #FFFFFF;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        /* Login Success Page */
+        .login-success-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--background-color);
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-success-container .logo-large {
+            max-width: 200px;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .login-success-container h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            animation: slideInUp 1s ease-out;
+        }
+
+        .login-success-container p {
+            font-size: 1.2rem;
+            color: var(--text-color-light);
+            margin-bottom: 2rem;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary);
+            animation: pulse 1.5s infinite alternate, fadeIn 2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        /* PR Data Panel */
+        .pr-data-panel {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+            margin-top: 1.5rem;
+            border: 1px dashed var(--border-color);
+            text-align: center;
+        }
+        .pr-data-panel h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .pr-data-panel p {
+            color: var(--text-color-light);
+            font-size: 1.1rem;
+        }
+
+        /* --------------------------------------------------- */
+        /* 移动端适配 (Media Queries)         */
+        /* --------------------------------------------------- */
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column; /* Stack sidebar and main content vertically */
+            }
+
+            .sidebar {
+                width: 100%; /* Full width for sidebar on mobile */
+                height: auto; /* Auto height */
+                flex-direction: row; /* Layout items horizontally */
+                justify-content: space-around; /* Distribute items evenly */
+                padding: 0.5rem 0;
+                box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05); /* Shadow at the bottom */
+                position: fixed; /* Keep sidebar at the bottom */
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-top: 1px solid var(--border-color);
+                z-index: 1001; /* Ensure it's on top */
+            }
+
+            .sidebar.expanded {
+                width: 100%; /* Still full width when "expanded" on mobile, but visual effect might be different */
+                height: auto;
+            }
+
+            .sidebar-header {
+                display: none; /* Hide logo on mobile sidebar to save space */
+            }
+
+            .sidebar-nav {
+                display: flex; /* Arrange nav items horizontally */
+                flex-direction: row;
+                justify-content: space-around;
+                width: 100%;
+            }
+
+            .sidebar-nav-item {
+                margin-bottom: 0; /* Remove vertical margin */
+                width: auto; /* Allow items to size naturally */
+            }
+
+            .sidebar-nav-item a {
+                flex-direction: column; /* Stack icon and text vertically */
+                padding: 0.5rem;
+                margin: 0 0.2rem;
+                font-size: 0.8rem; /* Smaller text */
+                text-align: center;
+            }
+
+            .sidebar-icon {
+                margin-bottom: 0.3rem; /* Space between icon and text */
+                font-size: 1.2rem; /* Smaller icons */
+                width: auto; /* Let icon size naturally */
+            }
+
+            .sidebar-text {
+                display: block; /* Always show text on mobile for quick recognition */
+                opacity: 1;
+                margin-left: 0; /* No margin from icon when stacked */
+                font-size: 0.7rem; /* Even smaller for text */
+            }
+
+            .sidebar.expanded .sidebar-text {
+                 margin-left: 0; /* Override expanded style */
+            }
+
+            .sidebar.expanded .sidebar-nav-item a {
+                 padding-left: 0.5rem; /* Override expanded style */
+            }
+
+            .main-content {
+                padding-bottom: 60px; /* Add padding to prevent content from being hidden by fixed sidebar */
+            }
+
+            .header {
+                padding: 0.8rem 1rem; /* Smaller padding */
+                flex-wrap: wrap; /* Allow elements to wrap */
+                justify-content: center; /* Center header items */
+                gap: 0.5rem; /* Smaller gap */
+            }
+
+            .header-logo-text {
+                flex-basis: 100%; /* Take full width */
+                justify-content: center; /* Center logo and CRM text */
+                margin-bottom: 0.5rem;
+            }
+
+            .header-logo {
+                height: 30px; /* Smaller logo */
+                margin-right: 0.5rem;
+            }
+
+            .crm-text {
+                font-size: 1.2rem; /* Smaller text */
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-around; /* Distribute buttons */
+                gap: 0.5rem;
+            }
+
+            .header-icon-button {
+                font-size: 1.2rem; /* Smaller icons */
+            }
+
+            .username {
+                display: none; /* Hide username on small screens */
+            }
+
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+            }
+
+            .content {
+                padding: 1rem; /* Smaller padding for content area */
+            }
+
+            .section-title {
+                font-size: 1.5rem; /* Smaller title */
+                margin-bottom: 1rem;
+            }
+
+            .btn {
+                padding: 0.6rem 1rem; /* Smaller buttons */
+                font-size: 0.9rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr; /* Single column layout for cards */
+            }
+
+            .auth-card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .auth-card h2 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-nav-item a {
+                padding: 0.4rem;
+                margin: 0 0.1rem;
+            }
+            .sidebar-icon {
+                font-size: 1rem;
+            }
+            .sidebar-text {
+                font-size: 0.6rem;
+            }
+            .header-right {
+                flex-wrap: wrap;
+            }
+            .header-icon-button, .pr-data-button {
+                flex-basis: 48%; /* Two buttons per row */
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container" id="auth-container">
+        <div class="auth-card" id="login-card">
+            <img src="logo横版.png" alt="基金会Logo" style="max-width: 250px; margin-bottom: 1.5rem;">
+            <h2>欢迎登录客户管理系统</h2>
+            <p>请登录以访问您的账户</p>
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            <button class="btn btn-primary" id="login-button">登录</button>
+            <p style="margin-top: 1rem; color: var(--text-color-light);">
+                没有账户? <a href="#" id="show-register-link" style="color: var(--primary);">立即注册</a>
+            </p>
+        </div>
+
+        <div class="auth-card hidden" id="register-card">
+            <img src="logo横版.png" alt="基金会Logo" style="max-width: 250px; margin-bottom: 1.5rem;">
+            <h2>注册新用户</h2>
+            <p>请填写您的注册信息</p>
+            <div class="form-group">
+                <label for="reg-username">用户名</label>
+                <input type="text" id="reg-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="reg-password">密码</label>
+                <input type="password" id="reg-password" placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label for="reg-confirm-password">确认密码</label>
+                <input type="password" id="reg-confirm-password" placeholder="请再次输入密码">
+            </div>
+            <button class="btn btn-primary" id="register-button">注册</button>
+            <p style="margin-top: 1rem; color: var(--text-color-light);">
+                已有账户? <a href="#" id="show-login-link" style="color: var(--primary);">立即登录</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="login-success-container hidden" id="login-success-container">
+        <img src="儿基会logo.png" alt="用户Logo" class="logo-large">
+        <h2>登录成功！</h2>
+        <p>正在加载客户管理系统...</p>
+        <div class="loading-text">CRM System is NOW LOADING.......</div>
+    </div>
+
+    <div class="container hidden" id="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="儿基会logo.png" alt="Logo" class="sidebar-logo">
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="dashboard" class="active">
+                            <i class="fas fa-tachometer-alt sidebar-icon"></i>
+                            <span class="sidebar-text">仪表盘</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="donors">
+                            <i class="fas fa-users sidebar-icon"></i>
+                            <span class="sidebar-text">捐赠者管理</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="donations">
+                            <i class="fas fa-hand-holding-usd sidebar-icon"></i>
+                            <span class="sidebar-text">捐赠管理</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="projects">
+                            <i class="fas fa-project-diagram sidebar-icon"></i>
+                            <span class="sidebar-text">项目管理</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="campaigns">
+                            <i class="fas fa-bullhorn sidebar-icon"></i>
+                            <span class="sidebar-text">募捐活动</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="communications">
+                            <i class="fas fa-comments sidebar-icon"></i>
+                            <span class="sidebar-text">沟通记录</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="reports">
+                            <i class="fas fa-chart-pie sidebar-icon"></i>
+                            <span class="sidebar-text">报告与分析</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" data-page="settings">
+                            <i class="fas fa-cog sidebar-icon"></i>
+                            <span class="sidebar-text">系统设置</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" id="logout-button">
+                            <i class="fas fa-sign-out-alt sidebar-icon"></i>
+                            <span class="sidebar-text">登出</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="header-icon-button" id="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="header-logo-text">
+                        <img src="logo横版.png" alt="基金会Logo" class="header-logo">
+                        <span class="crm-text">客户管理系统</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn pr-data-button" id="pr-data-button" data-active="false">
+                        公关数据
+                    </button>
+                    <button class="header-icon-button" id="mail-button">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <button class="header-icon-button" id="notification-button">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="header-user-info">
+                        <div class="user-avatar">
+                            <img id="user-avatar-small" src="https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png" alt="用户头像">
+                        </div>
+                        <span class="username" id="logged-in-user">管理员</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content" id="app-content">
+                <div id="dashboard-content" class="page-content">
+                    <h1 class="section-title">仪表盘</h1>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">总捐赠者</h3>
+                                <i class="fas fa-users fa-2x" style="color: var(--primary);"></i>
+                            </div>
+                            <div class="card-value" id="total-donors">0</div>
+                            <div class="card-description">注册并进行过捐赠的个人/组织</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">累计捐赠金额</h3>
+                                <i class="fas fa-money-bill-wave fa-2x" style="color: var(--success);"></i>
+                            </div>
+                            <div class="card-value" id="total-donations">¥0</div>
+                            <div class="card-description">平台累计收到的捐赠总额</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">当前进行项目</h3>
+                                <i class="fas fa-tasks fa-2x" style="color: var(--info);"></i>
+                            </div>
+                            <div class="card-value" id="current-projects">0</div>
+                            <div class="card-description">正在进行中的公益项目数量</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">项目完成率</h3>
+                                <i class="fas fa-check-circle fa-2x" style="color: var(--accent);"></i>
+                            </div>
+                            <div class="card-value" id="project-completion">0%</div>
+                            <div class="card-description">所有已结束项目与总项目数的比率</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3 class="card-title">捐赠趋势</h3>
+                            <div class="chart-container">
+                                <canvas id="donationTrendChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">捐赠者分布</h3>
+                            <div class="chart-container">
+                                <canvas id="donorDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pr-data-content" class="page-content hidden">
+                    <h1 class="section-title">公关数据概览</h1>
+                    <div class="pr-data-panel">
+                        <h3>公关数据模拟面板</h3>
+                        <p>这里将显示来自公关活动、媒体曝光、社会影响力等方面的实时或汇总数据。</p>
+                        <p>例如：</p>
+                        <ul>
+                            <li>媒体报道数量: <span>120</span></li>
+                            <li>社交媒体提及量: <span>5,500</span></li>
+                            <li>品牌美誉度指数: <span>8.5/10</span></li>
+                            <li>近期媒体曝光亮点: <span>XX慈善晚会成功举办，募得善款超预期。</span></li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-style: italic; color: var(--secondary);">
+                            (此为模拟数据，实际应用中会从后端动态加载)
+                        </p>
+                    </div>
+                    <div class="dashboard-grid" style="margin-top: 2rem;">
+                        <div class="card">
+                            <h3 class="card-title">媒体报道趋势</h3>
+                            <div class="chart-container">
+                                <canvas id="mediaCoverageChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">社交媒体情感分析</h3>
+                            <div class="chart-container">
+                                <canvas id="socialSentimentChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="donors-content" class="page-content hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">捐赠者管理</h1>
+                        <button class="btn btn-primary" id="add-donor-btn"><i class="fas fa-plus"></i> 添加捐赠者</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="donors-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>姓名/组织</th>
+                                    <th>联系方式</th>
+                                    <th>累计捐赠</th>
+                                    <th>类型</th>
+                                    <th>注册日期</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="add-donor-form" class="card hidden" style="margin-top: 2rem;">
+                        <h3 class="card-title">添加新捐赠者</h3>
+                        <div class="form-group">
+                            <label for="donor-name">姓名/组织</label>
+                            <input type="text" id="donor-name" placeholder="请输入姓名或组织名称">
+                        </div>
+                        <div class="form-group">
+                            <label for="donor-contact">联系方式</label>
+                            <input type="text" id="donor-contact" placeholder="请输入电话或邮箱">
+                        </div>
+                        <div class="form-group">
+                            <label for="donor-type">类型</label>
+                            <select id="donor-type">
+                                <option value="个人">个人</option>
+                                <option value="组织">组织</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-donor-btn">保存</button>
+                            <button class="btn btn-outline" id="cancel-donor-btn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="donations-content" class="page-content hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">捐赠管理</h1>
+                        <button class="btn btn-primary" id="add-donation-btn"><i class="fas fa-plus"></i> 记录新捐赠</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="donations-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>捐赠者</th>
+                                    <th>项目</th>
+                                    <th>金额 (¥)</th>
+                                    <th>日期</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="add-donation-form" class="card hidden" style="margin-top: 2rem;">
+                        <h3 class="card-title">记录新捐赠</h3>
+                        <div class="form-group">
+                            <label for="donation-donor">捐赠者</label>
+                            <input type="text" id="donation-donor" placeholder="请输入捐赠者姓名或ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="donation-project">关联项目</label>
+                            <input type="text" id="donation-project" placeholder="请输入项目名称或ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="donation-amount">金额 (¥)</label>
+                            <input type="number" id="donation-amount" placeholder="请输入捐赠金额">
+                        </div>
+                        <div class="form-group">
+                            <label for="donation-date">日期</label>
+                            <input type="date" id="donation-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="donation-status">状态</label>
+                            <select id="donation-status">
+                                <option value="已完成">已完成</option>
+                                <option value="待处理">待处理</option>
+                                <option value="退款">退款</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-donation-btn">保存</button>
+                            <button class="btn btn-outline" id="cancel-donation-btn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="projects-content" class="page-content hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">项目管理</h1>
+                        <button class="btn btn-primary" id="add-project-btn"><i class="fas fa-plus"></i> 创建新项目</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="projects-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>项目名称</th>
+                                    <th>预算 (¥)</th>
+                                    <th>已募金额 (¥)</th>
+                                    <th>状态</th>
+                                    <th>开始日期</th>
+                                    <th>结束日期</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="add-project-form" class="card hidden" style="margin-top: 2rem;">
+                        <h3 class="card-title">创建新项目</h3>
+                        <div class="form-group">
+                            <label for="project-name">项目名称</label>
+                            <input type="text" id="project-name" placeholder="请输入项目名称">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-budget">预算 (¥)</label>
+                            <input type="number" id="project-budget" placeholder="请输入项目预算">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-raised">已募金额 (¥)</label>
+                            <input type="number" id="project-raised" placeholder="请输入已募金额" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-status">状态</label>
+                            <select id="project-status">
+                                <option value="进行中">进行中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="待启动">待启动</option>
+                                <option value="已取消">已取消</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="project-start-date">开始日期</label>
+                            <input type="date" id="project-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-end-date">结束日期</label>
+                            <input type="date" id="project-end-date">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-project-btn">保存</button>
+                            <button class="btn btn-outline" id="cancel-project-btn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="campaigns-content" class="page-content hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">募捐活动管理</h1>
+                        <button class="btn btn-primary" id="add-campaign-btn"><i class="fas fa-plus"></i> 创建新活动</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="campaigns-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>活动名称</th>
+                                    <th>目标金额 (¥)</th>
+                                    <th>已募金额 (¥)</th>
+                                    <th>状态</th>
+                                    <th>开始日期</th>
+                                    <th>结束日期</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="add-campaign-form" class="card hidden" style="margin-top: 2rem;">
+                        <h3 class="card-title">创建新募捐活动</h3>
+                        <div class="form-group">
+                            <label for="campaign-name">活动名称</label>
+                            <input type="text" id="campaign-name" placeholder="请输入活动名称">
+                        </div>
+                        <div class="form-group">
+                            <label for="campaign-goal">目标金额 (¥)</label>
+                            <input type="number" id="campaign-goal" placeholder="请输入目标金额">
+                        </div>
+                        <div class="form-group">
+                            <label for="campaign-raised">已募金额 (¥)</label>
+                            <input type="number" id="campaign-raised" placeholder="请输入已募金额" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="campaign-status">状态</label>
+                            <select id="campaign-status">
+                                <option value="进行中">进行中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="待启动">待启动</option>
+                                <option value="已取消">已取消</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="campaign-start-date">开始日期</label>
+                            <input type="date" id="campaign-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="campaign-end-date">结束日期</label>
+                            <input type="date" id="campaign-end-date">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-campaign-btn">保存</button>
+                            <button class="btn btn-outline" id="cancel-campaign-btn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="communications-content" class="page-content hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">沟通记录</h1>
+                        <button class="btn btn-primary" id="add-communication-btn"><i class="fas fa-plus"></i> 添加新记录</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="communications-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>关联对象</th>
+                                    <th>类型</th>
+                                    <th>日期</th>
+                                    <th>主题</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="add-communication-form" class="card hidden" style="margin-top: 2rem;">
+                        <h3 class="card-title">添加新沟通记录</h3>
+                        <div class="form-group">
+                            <label for="comm-object">关联对象 (捐赠者/项目)</label>
+                            <input type="text" id="comm-object" placeholder="请输入关联对象姓名或ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="comm-type">类型</label>
+                            <select id="comm-type">
+                                <option value="电话">电话</option>
+                                <option value="邮件">邮件</option>
+                                <option value="会议">会议</option>
+                                <option value="拜访">拜访</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="comm-date">日期</label>
+                            <input type="date" id="comm-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="comm-subject">主题</label>
+                            <input type="text" id="comm-subject" placeholder="请输入沟通主题">
+                        </div>
+                        <div class="form-group">
+                            <label for="comm-notes">备注</label>
+                            <textarea id="comm-notes" rows="4" placeholder="请输入详细备注"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-communication-btn">保存</button>
+                            <button class="btn btn-outline" id="cancel-communication-btn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reports-content" class="page-content hidden">
+                    <h1 class="section-title">报告与分析</h1>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3 class="card-title">月度捐赠报告</h3>
+                            <p>查看每月的捐赠金额趋势。</p>
+                            <button class="btn btn-primary" onclick="alert('月度捐赠报告生成功能待开发！')">生成报告</button>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">项目进展报告</h3>
+                            <p>追踪各个项目的资金募集与支出情况。</p>
+                            <button class="btn btn-primary" onclick="alert('项目进展报告生成功能待开发！')">生成报告</button>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">捐赠者活跃度</h3>
+                            <p>分析捐赠者的活跃度及捐赠频率。</p>
+                            <button class="btn btn-primary" onclick="alert('捐赠者活跃度报告生成功能待开发！')">生成报告</button>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">活动效果分析</h3>
+                            <p>评估募捐活动的效果和投入产出比。</p>
+                            <button class="btn btn-primary" onclick="alert('活动效果分析报告生成功能待开发！')">生成报告</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings-content" class="page-content hidden">
+                    <h1 class="section-title">系统设置</h1>
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <h3 class="card-title" style="margin-bottom: 1.5rem;">通用设置</h3>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <span>暗色模式</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="darkModeToggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <span>通知提醒</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="notificationToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <span>数据备份</span>
+                                <button class="btn btn-outline" onclick="alert('数据备份功能待开发！')">立即备份</button>
+                            </div>
+                            <div class="setting-item">
+                                <span>语言设置</span>
+                                <select onchange="alert('语言切换功能待开发！')">
+                                    <option value="zh-CN">简体中文</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 1.5rem;">账户设置</h3>
+                        <div class="form-group">
+                            <label for="change-username">修改用户名</label>
+                            <input type="text" id="change-username" placeholder="请输入新用户名">
+                            <button class="btn btn-primary" id="save-username-btn" style="margin-top: 1rem;">保存用户名</button>
+                        </div>
+                        <div class="form-group" style="margin-top: 2rem;">
+                            <label for="old-password">旧密码</label>
+                            <input type="password" id="old-password" placeholder="请输入旧密码">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">新密码</label>
+                            <input type="password" id="new-password" placeholder="请输入新密码（至少6位）">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-new-password">确认新密码</label>
+                            <input type="password" id="confirm-new-password" placeholder="请再次输入新密码">
+                            <button class="btn btn-primary" id="save-password-btn" style="margin-top: 1rem;">保存密码</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authContainer = document.getElementById('auth-container');
+            const loginCard = document.getElementById('login-card');
+            const registerCard = document.getElementById('register-card');
+            const loginButton = document.getElementById('login-button');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const registerButton = document.getElementById('register-button');
+            const showRegisterLink = document.getElementById('show-register-link');
+            const showLoginLink = document.getElementById('show-login-link');
+            const loginSuccessContainer = document.getElementById('login-success-container');
+            const appContainer = document.getElementById('app-container');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const navLinks = document.querySelectorAll('.sidebar-nav-item a');
+            const appContent = document.getElementById('app-content');
+            const loggedInUser = document.getElementById('logged-in-user');
+            const userAvatarSmall = document.getElementById('user-avatar-small');
+            const logoutButton = document.getElementById('logout-button');
+            const prDataButton = document.getElementById('pr-data-button');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+
+            // Account settings elements
+            const changeUsernameInput = document.getElementById('change-username');
+            const saveUsernameBtn = document.getElementById('save-username-btn');
+            const oldPasswordInput = document.getElementById('old-password');
+            const newPasswordInput = document.getElementById('new-password');
+            const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+            const savePasswordBtn = document.getElementById('save-password-btn');
+
+
+            // Mock Data (replace with actual backend data in a real application)
+            const initialAppData = {
+                loggedInUser: {
+                    username: '管理员',
+                    avatar: 'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'
+                },
+                users: [ // New: Storing user credentials
+                    { username: 'admin', password: 'admin123' }
+                ],
+                dashboard: {
+                    totalDonors: 0,
+                    totalDonations: 0,
+                    currentProjects: 0,
+                    projectCompletion: 0,
+                    donationTrend: {
+                        labels: ['一月', '二月', '三月', '四月', '五月', '六月'],
+                        data: [0, 0, 0, 0, 0, 0]
+                    },
+                    donorDistribution: {
+                        labels: ['南京', '苏州', '无锡', '常州', '其他城市'],
+                        data: [0, 0, 0, 0, 0]
+                    }
+                },
+                prData: { // Mock PR Data
+                    mediaCoverage: {
+                        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                        data: [50, 75, 60, 90]
+                    },
+                    socialSentiment: {
+                        labels: ['积极', '中性', '消极'],
+                        data: [70, 20, 10]
+                    }
+                },
+                donors: [], // Initially empty
+                donations: [], // Initially empty
+                projects: [], // Initially empty
+                campaigns: [], // Initially empty
+                communications: [] // Initially empty
+            };
+
+            // Deep copy of initial data to preserve original state
+            let appData = JSON.parse(JSON.stringify(initialAppData));
+
+            // Function to save data to localStorage
+            const saveData = (key, data) => {
+                localStorage.setItem(key, JSON.stringify(data));
+            };
+
+            // Function to load data from localStorage
+            const loadData = (key) => {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            };
+
+            // Initialize or load appData from localStorage
+            const storedAppData = loadData('appData');
+            if (storedAppData) {
+                // Merge existing data with initial structure, preserving new fields like 'users'
+                // Ensure 'users' array is properly loaded or initialized
+                if (storedAppData.users) {
+                    appData.users = storedAppData.users;
+                } else {
+                    appData.users = initialAppData.users; // Fallback to initial users if not found
+                }
+                // Also update other parts of appData
+                Object.assign(appData, storedAppData);
+                // Ensure dashboard stats are always recalculated on load for consistency
+                updateDashboardStats();
+            } else {
+                saveData('appData', appData);
+            }
+
+
+            // Dark Mode Toggle
+            darkModeToggle.checked = localStorage.getItem('darkMode') === 'true';
+            if (darkModeToggle.checked) {
+                document.body.classList.add('dark-mode');
+            }
+
+            darkModeToggle.addEventListener('change', () => {
+                if (darkModeToggle.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'false');
+                }
+            });
+
+            // Login Logic
+            const performLogin = () => {
+                const username = usernameInput.value;
+                const password = passwordInput.value;
+
+                // Check against stored users
+                const user = appData.users.find(u => u.username === username && u.password === password);
+
+                if (user) {
+                    authContainer.classList.add('hidden');
+                    loginSuccessContainer.classList.remove('hidden');
+
+                    localStorage.setItem('loggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userAvatar', 'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'); // Store a default avatar
+
+                    setTimeout(() => {
+                        loginSuccessContainer.classList.add('hidden');
+                        appContainer.classList.remove('hidden');
+                        loggedInUser.textContent = localStorage.getItem('username');
+                        userAvatarSmall.src = localStorage.getItem('userAvatar');
+                        loadPage('dashboard'); // Load dashboard after successful login
+                    }, 3000); // Simulate loading time
+                } else {
+                    alert('用户名或密码错误！');
+                }
+            };
+
+            loginButton.addEventListener('click', performLogin);
+
+            // Enable Enter key for login
+            usernameInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    performLogin();
+                }
+            });
+            passwordInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    performLogin();
+                }
+            });
+
+
+            // Register Logic
+            showRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginCard.classList.add('hidden');
+                registerCard.classList.remove('hidden');
+                document.getElementById('reg-username').value = '';
+                document.getElementById('reg-password').value = '';
+                document.getElementById('reg-confirm-password').value = '';
+            });
+
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                registerCard.classList.add('hidden');
+                loginCard.classList.remove('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            });
+
+            registerButton.addEventListener('click', () => {
+                const regUsername = document.getElementById('reg-username').value;
+                const regPassword = document.getElementById('reg-password').value;
+                const regConfirmPassword = document.getElementById('reg-confirm-password').value;
+
+                if (!regUsername || !regPassword || !regConfirmPassword) {
+                    alert('所有字段都不能为空！');
+                    return;
+                }
+
+                if (regPassword.length < 6) {
+                    alert('密码长度不能少于6位！');
+                    return;
+                }
+
+                if (regPassword !== regConfirmPassword) {
+                    alert('两次输入的密码不一致！');
+                    return;
+                }
+
+                const existingUser = appData.users.find(u => u.username === regUsername);
+                if (existingUser) {
+                    alert('该用户名已被注册！');
+                    return;
+                }
+
+                appData.users.push({ username: regUsername, password: regPassword });
+                saveData('appData', appData); // Save updated users array
+                alert('注册成功！请登录。');
+                registerCard.classList.add('hidden');
+                loginCard.classList.remove('hidden');
+                document.getElementById('username').value = regUsername;
+                document.getElementById('password').value = regPassword;
+            });
+
+
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('loggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userAvatar');
+                localStorage.removeItem('currentPage');
+                window.location.reload(); // Reload to show login page
+            });
+
+            // Sidebar Toggle for mobile
+            sidebarToggle.addEventListener('click', () => {
+                // On mobile, the sidebar acts as a bottom navigation bar.
+                // Toggling 'expanded' doesn't change its width significantly,
+                // but might be used for other visual cues if designed.
+                // For this implementation, we can just toggle a class if needed.
+                // For simplicity, we are not changing its width on mobile with this toggle.
+                sidebar.classList.toggle('expanded'); // Still useful for desktop collapse/expand
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.dataset.page;
+                    loadPage(page);
+
+                    // Update active class
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    link.classList.add('active');
+
+                    // On mobile, automatically collapse sidebar after selection
+                    if (window.innerWidth <= 768) { // Adjust breakpoint as needed
+                         sidebar.classList.remove('expanded');
+                    }
+                });
+            });
+
+            // PR Data Button Functionality
+            prDataButton.addEventListener('click', () => {
+                const isActive = prDataButton.dataset.active === 'true';
+                prDataButton.dataset.active = !isActive;
+                prDataButton.classList.toggle('active', !isActive);
+
+                if (!isActive) {
+                    loadPage('pr-data'); // Load PR Data content
+                } else {
+                    // If PR data was active and now deactivated, go back to dashboard
+                    loadPage('dashboard');
+                }
+            });
+
+            function updateDashboardStats() {
+                // 总捐赠者
+                appData.dashboard.totalDonors = appData.donors.length;
+
+                // 累计捐赠金额
+                appData.dashboard.totalDonations = appData.donations.reduce((sum, d) => sum + d.amount, 0);
+
+                // 当前进行项目
+                appData.dashboard.currentProjects = appData.projects.filter(p => p.status === '进行中').length;
+
+                // 项目完成率
+                const totalProjects = appData.projects.length;
+                const completedProjects = appData.projects.filter(p => p.status === '已完成').length;
+                appData.dashboard.projectCompletion = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
+
+                // 捐赠趋势 (简化：只统计最近6个月的捐赠总额)
+                const now = new Date();
+                const currentMonth = now.getMonth(); // 0-11
+                const currentYear = now.getFullYear();
+                
+                const monthlyDonations = Array(6).fill(0); // For last 6 months
+                const trendLabels = [];
+
+                for (let i = 5; i >= 0; i--) {
+                    let month = (currentMonth - i + 12) % 12;
+                    let year = currentYear;
+                    if (currentMonth - i < 0) {
+                        year--;
+                    }
+                    trendLabels.push(`${year}年${month + 1}月`);
+                }
+
+                appData.donations.forEach(donation => {
+                    const donationDate = new Date(donation.date);
+                    const donationMonth = donationDate.getMonth();
+                    const donationYear = donationDate.getFullYear();
+
+                    for (let i = 0; i < 6; i++) {
+                        let month = (currentMonth - i + 12) % 12;
+                        let year = currentYear;
+                        if (currentMonth - i < 0) {
+                            year--;
+                        }
+
+                        if (donationYear === year && donationMonth === month) {
+                            monthlyDonations[5 - i] += donation.amount;
+                        }
+                    }
+                });
+                appData.dashboard.donationTrend.labels = trendLabels;
+                appData.dashboard.donationTrend.data = monthlyDonations;
+
+                // 捐赠者分布 (简化：基于捐赠者类型)
+                const donorTypeCounts = { '个人': 0, '组织': 0 };
+                appData.donors.forEach(donor => {
+                    if (donorTypeCounts[donor.type] !== undefined) {
+                        donorTypeCounts[donor.type]++;
+                    }
+                });
+                appData.dashboard.donorDistribution.labels = Object.keys(donorTypeCounts);
+                appData.dashboard.donorDistribution.data = Object.values(donorTypeCounts);
+
+                // For chart, if no data, add a default '无数据' entry
+                if (appData.dashboard.donorDistribution.data.every(val => val === 0)) {
+                    appData.dashboard.donorDistribution.labels = ['无数据'];
+                    appData.dashboard.donorDistribution.data = [1]; // Small value to show something
+                }
+
+                // Call save data after updating stats
+                saveData('appData', appData);
+            }
+
+            function loadPage(page) {
+                document.querySelectorAll('.page-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`${page}-content`).classList.remove('hidden');
+                localStorage.setItem('currentPage', page); // Save current page
+
+                // Highlight active link in sidebar
+                navLinks.forEach(link => {
+                    if (link.dataset.page === page) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                // Ensure PR Data button state is consistent
+                if (page === 'pr-data') {
+                    prDataButton.classList.add('active');
+                    prDataButton.dataset.active = 'true';
+                } else {
+                    prDataButton.classList.remove('active');
+                    prDataButton.dataset.active = 'false';
+                }
+
+
+                // Call specific load functions for each page
+                switch (page) {
+                    case 'dashboard':
+                        loadDashboard();
+                        break;
+                    case 'pr-data':
+                        loadPRData();
+                        break;
+                    case 'donors':
+                        loadDonors();
+                        break;
+                    case 'donations':
+                        loadDonations();
+                        break;
+                    case 'projects':
+                        loadProjects();
+                        break;
+                    case 'campaigns':
+                        loadCampaigns();
+                        break;
+                    case 'communications':
+                        loadCommunications();
+                        break;
+                    case 'settings':
+                        // Populate current username in the input field when settings page loads
+                        changeUsernameInput.value = localStorage.getItem('username') || '';
+                        break;
+                    case 'reports':
+                        // Reports page has no dynamic data to load initially
+                        break;
+                    default:
+                        console.log('Page not found:', page);
+                }
+            }
+
+            function loadDashboard() {
+                // Ensure stats are updated before rendering
+                updateDashboardStats();
+
+                document.getElementById('total-donors').textContent = appData.dashboard.totalDonors;
+                document.getElementById('total-donations').textContent = '¥' + appData.dashboard.totalDonations.toLocaleString();
+                document.getElementById('current-projects').textContent = appData.dashboard.currentProjects;
+                document.getElementById('project-completion').textContent = appData.dashboard.projectCompletion + '%';
+
+                renderDonationTrendChart();
+                renderDonorDistributionChart();
+            }
+
+            let donationTrendChartInstance = null;
+            function renderDonationTrendChart() {
+                if (donationTrendChartInstance) {
+                    donationTrendChartInstance.destroy();
+                }
+                const ctx = document.getElementById('donationTrendChart').getContext('2d');
+                donationTrendChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: appData.dashboard.donationTrend.labels,
+                        datasets: [{
+                            label: '月度捐赠金额 (¥)',
+                            data: appData.dashboard.donationTrend.data,
+                            borderColor: 'var(--primary)',
+                            backgroundColor: 'var(--primary-light)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '金额 (¥)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '月份'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            let donorDistributionChartInstance = null;
+            function renderDonorDistributionChart() {
+                if (donorDistributionChartInstance) {
+                    donorDistributionChartInstance.destroy();
+                }
+                const ctx = document.getElementById('donorDistributionChart').getContext('2d');
+                donorDistributionChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: appData.dashboard.donorDistribution.labels,
+                        datasets: [{
+                            label: '捐赠者数量',
+                            data: appData.dashboard.donorDistribution.data,
+                            backgroundColor: [
+                                'var(--primary)',
+                                'var(--secondary)',
+                                'var(--accent)',
+                                '#4CAF50',
+                                '#9E9E9E'
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' }
+                        }
+                    }
+                });
+            }
+
+            // PR Data specific functions
+            let mediaCoverageChartInstance = null;
+            let socialSentimentChartInstance = null;
+
+            function loadPRData() {
+                // Here you would fetch actual PR data from an API
+                // For now, we use mock data from appData.prData
+                renderMediaCoverageChart();
+                renderSocialSentimentChart();
+            }
+
+            function renderMediaCoverageChart() {
+                if (mediaCoverageChartInstance) {
+                    mediaCoverageChartInstance.destroy();
+                }
+                const ctx = document.getElementById('mediaCoverageChart').getContext('2d');
+                mediaCoverageChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: appData.prData.mediaCoverage.labels,
+                        datasets: [{
+                            label: '媒体报道数量',
+                            data: appData.prData.mediaCoverage.data,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '数量'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '季度'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderSocialSentimentChart() {
+                if (socialSentimentChartInstance) {
+                    socialSentimentChartInstance.destroy();
+                }
+                const ctx = document.getElementById('socialSentimentChart').getContext('2d');
+                socialSentimentChartInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: appData.prData.socialSentiment.labels,
+                        datasets: [{
+                            label: '社交媒体情感',
+                            data: appData.prData.socialSentiment.data,
+                            backgroundColor: [
+                                'var(--success)',   // 积极
+                                'var(--info)',      // 中性
+                                'var(--danger)'     // 消极
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' }
+                        }
+                    }
+                });
+            }
+
+
+            function loadDonors() {
+                const tableBody = document.querySelector('#donors-table tbody');
+                tableBody.innerHTML = '';
+                appData.donors.forEach(donor => {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = donor.id;
+                    row.insertCell().textContent = donor.name;
+                    row.insertCell().textContent = donor.contact;
+                    row.insertCell().textContent = '¥' + donor.totalDonated.toLocaleString();
+                    row.insertCell().textContent = donor.type;
+                    row.insertCell().textContent = donor.regDate;
+                    const actionsCell = row.insertCell();
+                    actionsCell.innerHTML = `
+                        <button class="btn-icon" onclick="editDonor('${donor.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteDonor('${donor.id}')"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                });
+            }
+
+            document.getElementById('add-donor-btn').addEventListener('click', () => {
+                document.getElementById('add-donor-form').classList.remove('hidden');
+                document.getElementById('donor-name').value = '';
+                document.getElementById('donor-contact').value = '';
+                document.getElementById('donor-type').value = '个人';
+            });
+
+            document.getElementById('cancel-donor-btn').addEventListener('click', () => {
+                document.getElementById('add-donor-form').classList.add('hidden');
+            });
+
+            document.getElementById('save-donor-btn').addEventListener('click', () => {
+                const name = document.getElementById('donor-name').value;
+                const contact = document.getElementById('donor-contact').value;
+                const type = document.getElementById('donor-type').value;
+
+                if (name && contact) {
+                    const newId = 'D' + String(appData.donors.length + 1).padStart(3, '0');
+                    const newDonor = {
+                        id: newId,
+                        name: name,
+                        contact: contact,
+                        totalDonated: 0,
+                        type: type,
+                        regDate: new Date().toISOString().slice(0, 10)
+                    };
+                    appData.donors.push(newDonor);
+                    saveData('appData', appData);
+                    loadDonors();
+                    updateDashboardStats(); // Update dashboard after adding donor
+                    document.getElementById('add-donor-form').classList.add('hidden');
+                    alert('捐赠者添加成功！');
+                } else {
+                    alert('请填写所有必填项！');
+                }
+            });
+
+            window.editDonor = (id) => {
+                alert('编辑捐赠者 ' + id + ' 功能待开发！');
+            };
+
+            window.deleteDonor = (id) => {
+                if (confirm('确定要删除捐赠者 ' + id + ' 吗？')) {
+                    appData.donors = appData.donors.filter(donor => donor.id !== id);
+                    saveData('appData', appData);
+                    loadDonors();
+                    updateDashboardStats(); // Update dashboard after deleting donor
+                    alert('捐赠者删除成功！');
+                }
+            };
+
+            function loadDonations() {
+                const tableBody = document.querySelector('#donations-table tbody');
+                tableBody.innerHTML = '';
+                appData.donations.forEach(donation => {
+                    const row = tableBody.insertRow(); // Changed to insertRow() for consistency
+                    row.insertCell().textContent = donation.id;
+                    row.insertCell().textContent = donation.donor;
+                    row.insertCell().textContent = donation.project;
+                    row.insertCell().textContent = '¥' + donation.amount.toLocaleString();
+                    row.insertCell().textContent = donation.date;
+                    const statusCell = row.insertCell();
+                    statusCell.innerHTML = `<span class="status-badge status-${getStatusClass(donation.status)}">${donation.status}</span>`;
+                    const actionsCell = row.insertCell();
+                    actionsCell.innerHTML = `
+                        <button class="btn-icon" onclick="editDonation('${donation.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteDonation('${donation.id}')"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                });
+            }
+
+            document.getElementById('add-donation-btn').addEventListener('click', () => {
+                document.getElementById('add-donation-form').classList.remove('hidden');
+                document.getElementById('donation-donor').value = '';
+                document.getElementById('donation-project').value = '';
+                document.getElementById('donation-amount').value = '';
+                document.getElementById('donation-date').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('donation-status').value = '已完成';
+            });
+
+            document.getElementById('cancel-donation-btn').addEventListener('click', () => {
+                document.getElementById('add-donation-form').classList.add('hidden');
+            });
+
+            document.getElementById('save-donation-btn').addEventListener('click', () => {
+                const donor = document.getElementById('donation-donor').value;
+                const project = document.getElementById('donation-project').value;
+                const amount = parseFloat(document.getElementById('donation-amount').value);
+                const date = document.getElementById('donation-date').value;
+                const status = document.getElementById('donation-status').value;
+
+                if (donor && project && amount > 0 && date) {
+                    const newId = 'DN' + String(appData.donations.length + 1).padStart(3, '0');
+                    const newDonation = {
+                        id: newId,
+                        donor: donor,
+                        project: project,
+                        amount: amount,
+                        date: date,
+                        status: status
+                    };
+                    appData.donations.push(newDonation);
+
+                    // Also update the totalDonated for the corresponding donor
+                    const associatedDonor = appData.donors.find(d => d.name === donor || d.id === donor);
+                    if (associatedDonor) {
+                        associatedDonor.totalDonated += amount;
+                    }
+
+                    saveData('appData', appData);
+                    loadDonations();
+                    updateDashboardStats(); // Update dashboard after adding donation
+                    document.getElementById('add-donation-form').classList.add('hidden');
+                    alert('捐赠记录添加成功！');
+                } else {
+                    alert('请填写所有必填项并确保金额有效！');
+                }
+            });
+
+            window.editDonation = (id) => {
+                alert('编辑捐赠记录 ' + id + ' 功能待开发！');
+            };
+
+            window.deleteDonation = (id) => {
+                if (confirm('确定要删除捐赠记录 ' + id + ' 吗？')) {
+                    const deletedDonation = appData.donations.find(donation => donation.id === id);
+                    if (deletedDonation) {
+                        // Revert the totalDonated for the corresponding donor
+                        const associatedDonor = appData.donors.find(d => d.name === deletedDonation.donor || d.id === deletedDonation.donor);
+                        if (associatedDonor) {
+                            associatedDonor.totalDonated -= deletedDonation.amount;
+                        }
+                    }
+                    appData.donations = appData.donations.filter(donation => donation.id !== id);
+                    saveData('appData', appData);
+                    loadDonations();
+                    updateDashboardStats(); // Update dashboard after deleting donation
+                    alert('捐赠记录删除成功！');
+                }
+            };
+
+            function loadProjects() {
+                const tableBody = document.querySelector('#projects-table tbody');
+                tableBody.innerHTML = '';
+                appData.projects.forEach(project => {
+                    const row = tableBody.insertRow(); // Changed to insertRow() for consistency
+                    row.insertCell().textContent = project.id;
+                    row.insertCell().textContent = project.name;
+                    row.insertCell().textContent = '¥' + project.budget.toLocaleString();
+                    row.insertCell().textContent = '¥' + project.raised.toLocaleString();
+                    const statusCell = row.insertCell();
+                    statusCell.innerHTML = `<span class="status-badge status-${getStatusClass(project.status)}">${project.status}</span>`;
+                    row.insertCell().textContent = project.startDate;
+                    row.insertCell().textContent = project.endDate;
+                    const actionsCell = row.insertCell();
+                    actionsCell.innerHTML = `
+                        <button class="btn-icon" onclick="editProject('${project.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteProject('${project.id}')"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                });
+            }
+
+            document.getElementById('add-project-btn').addEventListener('click', () => {
+                document.getElementById('add-project-form').classList.remove('hidden');
+                document.getElementById('project-name').value = '';
+                document.getElementById('project-budget').value = '';
+                document.getElementById('project-raised').value = '0';
+                document.getElementById('project-status').value = '进行中';
+                document.getElementById('project-start-date').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('project-end-date').value = '';
+            });
+
+            document.getElementById('cancel-project-btn').addEventListener('click', () => {
+                document.getElementById('add-project-form').classList.add('hidden');
+            });
+
+            document.getElementById('save-project-btn').addEventListener('click', () => {
+                const name = document.getElementById('project-name').value;
+                const budget = parseFloat(document.getElementById('project-budget').value);
+                const raised = parseFloat(document.getElementById('project-raised').value);
+                const status = document.getElementById('project-status').value;
+                const startDate = document.getElementById('project-start-date').value;
+                const endDate = document.getElementById('project-end-date').value;
+
+                if (name && budget > 0 && startDate) {
+                    const newId = 'P' + String(appData.projects.length + 1).padStart(3, '0');
+                    const newProject = {
+                        id: newId,
+                        name: name,
+                        budget: budget,
+                        raised: raised,
+                        status: status,
+                        startDate: startDate,
+                        endDate: endDate
+                    };
+                    appData.projects.push(newProject);
+                    saveData('appData', appData);
+                    loadProjects();
+                    updateDashboardStats(); // Update dashboard after adding project
+                    document.getElementById('add-project-form').classList.add('hidden');
+                    alert('项目创建成功！');
+                } else {
+                    alert('请填写所有必填项并确保预算有效！');
+                }
+            });
+
+            window.editProject = (id) => {
+                alert('编辑项目 ' + id + ' 功能待开发！');
+            };
+
+            window.deleteProject = (id) => {
+                if (confirm('确定要删除项目 ' + id + ' 吗？')) {
+                    appData.projects = appData.projects.filter(project => project.id !== id);
+                    saveData('appData', appData);
+                    loadProjects();
+                    updateDashboardStats(); // Update dashboard after deleting project
+                    alert('项目删除成功！');
+                }
+            };
+
+            function loadCampaigns() {
+                const tableBody = document.querySelector('#campaigns-table tbody');
+                tableBody.innerHTML = '';
+                appData.campaigns.forEach(campaign => {
+                    const row = tableBody.insertRow(); // Changed to insertRow() for consistency
+                    row.insertCell().textContent = campaign.id;
+                    row.insertCell().textContent = campaign.name;
+                    row.insertCell().textContent = '¥' + campaign.goal.toLocaleString();
+                    row.insertCell().textContent = '¥' + campaign.raised.toLocaleString();
+                    const statusCell = row.insertCell();
+                    statusCell.innerHTML = `<span class="status-badge status-${getStatusClass(campaign.status)}">${campaign.status}</span>`;
+                    row.insertCell().textContent = campaign.startDate;
+                    row.insertCell().textContent = campaign.endDate;
+                    const actionsCell = row.insertCell();
+                    actionsCell.innerHTML = `
+                        <button class="btn-icon" onclick="editCampaign('${campaign.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteCampaign('${campaign.id}')"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                });
+            }
+
+            document.getElementById('add-campaign-btn').addEventListener('click', () => {
+                document.getElementById('add-campaign-form').classList.remove('hidden');
+                document.getElementById('campaign-name').value = '';
+                document.getElementById('campaign-goal').value = '';
+                document.getElementById('campaign-raised').value = '0';
+                document.getElementById('campaign-status').value = '进行中';
+                document.getElementById('campaign-start-date').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('campaign-end-date').value = '';
+            });
+
+            document.getElementById('cancel-campaign-btn').addEventListener('click', () => {
+                document.getElementById('add-campaign-form').classList.add('hidden');
+            });
+
+            document.getElementById('save-campaign-btn').addEventListener('click', () => {
+                const name = document.getElementById('campaign-name').value;
+                const goal = parseFloat(document.getElementById('campaign-goal').value);
+                const raised = parseFloat(document.getElementById('campaign-raised').value);
+                const status = document.getElementById('campaign-status').value;
+                const startDate = document.getElementById('campaign-start-date').value;
+                const endDate = document.getElementById('campaign-end-date').value;
+
+                if (name && goal > 0 && startDate) {
+                    const newId = 'C' + String(appData.campaigns.length + 1).padStart(3, '0');
+                    const newCampaign = {
+                        id: newId,
+                        name: name,
+                        goal: goal,
+                        raised: raised,
+                        status: status,
+                        startDate: startDate,
+                        endDate: endDate
+                    };
+                    appData.campaigns.push(newCampaign);
+                    saveData('appData', appData);
+                    loadCampaigns();
+                    updateDashboardStats(); // Update dashboard after adding campaign
+                    document.getElementById('add-campaign-form').classList.add('hidden');
+                    alert('募捐活动创建成功！');
+                } else {
+                    alert('请填写所有必填项并确保目标金额有效！');
+                }
+            });
+
+            window.editCampaign = (id) => {
+                alert('编辑募捐活动 ' + id + ' 功能待开发！');
+            };
+
+            window.deleteCampaign = (id) => {
+                if (confirm('确定要删除募捐活动 ' + id + ' 吗？')) {
+                    appData.campaigns = appData.campaigns.filter(campaign => campaign.id !== id);
+                    saveData('appData', appData);
+                    loadCampaigns();
+                    updateDashboardStats(); // Update dashboard after deleting campaign
+                    alert('募捐活动删除成功！');
+                }
+            };
+
+            function loadCommunications() {
+                const tableBody = document.querySelector('#communications-table tbody');
+                tableBody.innerHTML = '';
+                appData.communications.forEach(comm => {
+                    const row = tableBody.insertRow(); // Changed to insertRow() for consistency
+                    row.insertCell().textContent = comm.id;
+                    row.insertCell().textContent = comm.object;
+                    row.insertCell().textContent = comm.type;
+                    row.insertCell().textContent = comm.date;
+                    row.insertCell().textContent = comm.subject;
+                    const actionsCell = row.insertCell();
+                    actionsCell.innerHTML = `
+                        <button class="btn-icon" onclick="editCommunication('${comm.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteCommunication('${comm.id}')"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                });
+            }
+
+            document.getElementById('add-communication-btn').addEventListener('click', () => {
+                document.getElementById('add-communication-form').classList.remove('hidden');
+                document.getElementById('comm-object').value = '';
+                document.getElementById('comm-type').value = '电话';
+                document.getElementById('comm-date').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('comm-subject').value = '';
+                document.getElementById('comm-notes').value = '';
+            });
+
+            document.getElementById('cancel-communication-btn').addEventListener('click', () => {
+                document.getElementById('add-communication-form').classList.add('hidden');
+            });
+
+            document.getElementById('save-communication-btn').addEventListener('click', () => {
+                const object = document.getElementById('comm-object').value;
+                const type = document.getElementById('comm-type').value;
+                const date = document.getElementById('comm-date').value;
+                const subject = document.getElementById('comm-subject').value;
+                const notes = document.getElementById('comm-notes').value;
+
+                if (object && type && date && subject) {
+                    const newId = 'CM' + String(appData.communications.length + 1).padStart(3, '0');
+                    const newCommunication = {
+                        id: newId,
+                        object: object,
+                        type: type,
+                        date: date,
+                        subject: subject,
+                        notes: notes
+                    };
+                    appData.communications.push(newCommunication);
+                    saveData('appData', appData);
+                    loadCommunications();
+                    // Communication changes don't directly affect dashboard stats
+                    document.getElementById('add-communication-form').classList.add('hidden');
+                    alert('沟通记录添加成功！');
+                } else {
+                    alert('请填写所有必填项！');
+                }
+            });
+
+            window.editCommunication = (id) => {
+                alert('编辑沟通记录 ' + id + ' 功能待开发！');
+            };
+
+            window.deleteCommunication = (id) => {
+                if (confirm('确定要删除沟通记录 ' + id + ' 吗？')) {
+                    appData.communications = appData.communications.filter(comm => comm.id !== id);
+                    saveData('appData', appData);
+                    loadCommunications();
+                    // Communication changes don't directly affect dashboard stats
+                    alert('沟通记录删除成功！');
+                }
+            };
+
+            function getStatusClass(status) {
+                switch (status) {
+                    case '进行中': return 'ongoing';
+                    case '已完成': return 'completed';
+                    case '待处理': return 'pending';
+                    case '待启动': return 'pending';
+                    case '已取消': return 'closed';
+                    case '退款': return 'closed';
+                    default: return '';
+                }
+            }
+
+            // Function to reset appData to initial state (for development/demo)
+            window.resetAllData = () => {
+                if (confirm('这将清空所有数据并恢复到初始状态，确定吗？')) {
+                    localStorage.removeItem('appData');
+                    appData = JSON.parse(JSON.stringify(initialAppData)); // Reset to initial empty state
+                    saveData('appData', appData); // Save the reset data
+                    loadPage(localStorage.getItem('currentPage') || 'dashboard'); // Reload current page to reflect changes
+                    alert('所有数据已重置！');
+                }
+            };
+
+            // This function could be called on specific events, e.g., an "Import Data" button
+            window.importData = (type) => {
+                // For demonstration, let's just restore the specific type's data
+                // In a real app, you'd parse a file, validate, and then update appData
+                // For now, it will simply re-initialize that specific array from initialAppData
+                if (initialAppData[type]) {
+                    appData[type] = JSON.parse(JSON.stringify(initialAppData[type]));
+                    saveData('appData', appData);
+                    alert(`${type} 数据已重置为初始状态！`);
+                    // Reload the specific page or dashboard if needed
+                    switch (type) {
+                        case 'donors': loadDonors(); updateDashboardStats(); break;
+                        case 'donations': loadDonations(); updateDashboardStats(); break;
+                        case 'projects': loadProjects(); updateDashboardStats(); break;
+                        case 'campaigns': loadCampaigns(); updateDashboardStats(); break;
+                        case 'communications': loadCommunications(); break;
+                        default: loadPage(localStorage.getItem('currentPage') || 'dashboard'); break;
+                    }
+                } else {
+                    alert('无效的数据类型！');
+                }
+            };
+
+            // Modify Username Logic
+            saveUsernameBtn.addEventListener('click', () => {
+                const newUsername = changeUsernameInput.value.trim();
+                const currentUsername = localStorage.getItem('username');
+
+                if (!newUsername) {
+                    alert('新用户名不能为空！');
+                    return;
+                }
+
+                if (newUsername === currentUsername) {
+                    alert('新用户名不能与当前用户名相同！');
+                    return;
+                }
+
+                const existingUser = appData.users.find(user => user.username === newUsername);
+                if (existingUser) {
+                    alert('该用户名已被其他用户占用，请选择其他用户名！');
+                    return;
+                }
+
+                // Find and update the username in appData.users
+                const currentUserIndex = appData.users.findIndex(user => user.username === currentUsername);
+                if (currentUserIndex !== -1) {
+                    appData.users[currentUserIndex].username = newUsername;
+                    localStorage.setItem('username', newUsername); // Update username in localStorage
+                    loggedInUser.textContent = newUsername; // Update displayed username
+                    saveData('appData', appData); // Save updated appData
+                    alert('用户名修改成功！');
+                } else {
+                    alert('未找到当前登录用户，无法修改用户名。');
+                }
+            });
+
+            // Modify Password Logic
+            savePasswordBtn.addEventListener('click', () => {
+                const currentUsername = localStorage.getItem('username');
+                const oldPassword = oldPasswordInput.value;
+                const newPassword = newPasswordInput.value;
+                const confirmNewPassword = confirmNewPasswordInput.value;
+
+                if (!oldPassword || !newPassword || !confirmNewPassword) {
+                    alert('所有密码字段都不能为空！');
+                    return;
+                }
+
+                const currentUser = appData.users.find(user => user.username === currentUsername);
+
+                if (!currentUser) {
+                    alert('未找到当前登录用户，无法修改密码。');
+                    return;
+                }
+
+                if (currentUser.password !== oldPassword) {
+                    alert('旧密码不正确！');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    alert('新密码长度不能少于6位！');
+                    return;
+                }
+
+                if (newPassword !== confirmNewPassword) {
+                    alert('新密码与确认密码不一致！');
+                    return;
+                }
+
+                if (oldPassword === newPassword) {
+                    alert('新密码不能与旧密码相同！');
+                    return;
+                }
+
+                currentUser.password = newPassword;
+                saveData('appData', appData); // Save updated appData
+                alert('密码修改成功！请重新登录。');
+                // Force logout after password change for security
+                localStorage.removeItem('loggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userAvatar');
+                localStorage.removeItem('currentPage');
+                window.location.reload();
+            });
+
+            // Initial check and load
+            const loggedIn = localStorage.getItem('loggedIn');
+            if (loggedIn === 'true') {
+                authContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loggedInUser.textContent = localStorage.getItem('username') || appData.loggedInUser.username;
+                userAvatarSmall.src = localStorage.getItem('userAvatar') || appData.loggedInUser.avatar;
+                // Make sure appData.loggedInUser reflects what's in localStorage
+                appData.loggedInUser.username = loggedInUser.textContent;
+                appData.loggedInUser.avatar = userAvatarSmall.src;
+
+                // Load page and ensure dashboard stats are calculated
+                loadPage(localStorage.getItem('currentPage') || 'dashboard');
+            } else {
+                authContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
