@@ -1,0 +1,61 @@
+
+/* 公益主题配色 */
+:root {
+  --primary-color: #F57C00; /* 温暖橙 */
+  --secondary-color: #D32F2F; /* 爱心红 */
+  --bg-color: rgba(255, 255, 255, 0.35); /* 半透明背景 */
+  --text-color: #333;
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* 全局字体 */
+body {
+  font-family: "Helvetica Neue", sans-serif;
+  color: var(--text-color);
+  background: url("/assets/bg-light.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* 卡片拟态 */
+.card {
+  background: var(--bg-color);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 2rem;
+}
+
+/* 表单样式 */
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+/* 按钮 */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.section-title {
+  color: var(--secondary-color);
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
